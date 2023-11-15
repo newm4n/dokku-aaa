@@ -2,23 +2,16 @@ package internal
 
 import (
 	"context"
-	"embed"
 	"fmt"
-	"github.com/gabriel-vasile/mimetype"
+	"github.com/gorilla/mux"
 	"github.com/hyperjumptech/jiffy"
 	"github.com/newm4n/dokku-aaa/configuration"
 	log "github.com/sirupsen/logrus"
-	"io"
 	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"time"
-)
-
-var (
-	//go:embed static/*
-	staticFiles embed.FS
 )
 
 func configureLogging() {
@@ -48,6 +41,9 @@ func Start() {
 	configureLogging()
 	log.Infof("Starting Server")
 	startTime := time.Now()
+	router := mux.NewRouter()
+
+	InitRouter(router)
 
 	var wait time.Duration
 
@@ -80,7 +76,7 @@ func Start() {
 		ReadTimeout:  ReadTimeout,
 		IdleTimeout:  IdleTimeout,
 		// Handler:      Router, // Pass our instance of gorilla/mux in.
-		Handler: &StaticProcessor{},
+		Handler: router,
 	}
 	// Run our server in a goroutine so that it doesn't block.
 	go func() {
@@ -112,72 +108,26 @@ func Start() {
 	os.Exit(0)
 }
 
-func StaticPath(response http.ResponseWriter, request *http.Request) {
+func InitRouter(r *mux.Router) {
+	aaa := &TheHandler{}
+	r.HandleFunc("/login", aaa.Login).Methods(http.MethodPost)
+}
+
+type TheHandler struct {
+}
+
+func (hdler *TheHandler) Login(response http.ResponseWriter, request *http.Request) {
 
 }
 
-type StaticProcessor struct {
+func (hdler *TheHandler) Refresh(response http.ResponseWriter, request *http.Request) {
+
 }
 
-func (proc *StaticProcessor) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	if len(request.URL.Path) < 4 || request.URL == nil {
-		log.Warnf("Path redirect")
-		response.Header().Add("Location", "/index.html")
-		response.WriteHeader(http.StatusMovedPermanently)
-		return
-	} else if request.URL.Path[:4] == "/api" {
-		response.Header().Set("Content-Type", "text/html")
-		response.WriteHeader(http.StatusOK)
-		response.Write([]byte(fmt.Sprintf("<html><head><title>API PATH : %s</title></head><body>"+
-			"</body></html>", request.URL.Path)))
-		log.Debugf("API %s", request.URL.Path)
-	} else {
-		log.Warnf("Path %s", request.URL.Path)
-		nPath := "static" + request.URL.Path
-		if request.Method != http.MethodGet {
-			response.WriteHeader(http.StatusMethodNotAllowed)
-			log.Errorf("%s for %s : %d. only accept GET", request.Method, nPath, http.StatusMethodNotAllowed)
-			return
-		}
-		fil, err := staticFiles.Open(nPath)
-		if err != nil {
-			response.Header().Set("Content-Type", "text/html")
-			response.WriteHeader(http.StatusNotFound)
-			response.Write([]byte(fmt.Sprintf("<html><head><title>Not Found</title></head><body>"+
-				"%s</body></html>", nPath)))
-			log.Errorf("%s %s: %d", request.Method, nPath, http.StatusNotFound)
-			return
-		}
-		finf, err := fil.Stat()
-		if err != nil {
-			response.Header().Set("Content-Type", "text/html")
-			response.WriteHeader(http.StatusNotFound)
-			response.Write([]byte(fmt.Sprintf("<html><head><title>Not Found</title></head><body>"+
-				"%s</body></html>", nPath)))
-			log.Errorf("%s %s: %d", request.Method, nPath, http.StatusNotFound)
-			return
-		}
-		if finf.IsDir() {
-			response.Header().Set("Content-Type", "text/html")
-			response.WriteHeader(http.StatusNotFound)
-			response.Write([]byte(fmt.Sprintf("<html><head><title>Not Found</title></head><body>"+
-				"can not open dir : %s</body></html>", nPath)))
-			log.Errorf("%s %s is an unhandled dir: %d", request.Method, nPath, http.StatusNotFound)
-			return
-		}
-		content, err := io.ReadAll(fil)
-		if err != nil {
-			response.Header().Set("Content-Type", "text/html")
-			response.WriteHeader(http.StatusInternalServerError)
-			response.Write([]byte(fmt.Sprintf("<html><head><title>Internal Server Error</title></head><body>"+
-				" %s</body></html>", finf.Name())))
-			log.Errorf("%s %s: %d", request.Method, nPath, http.StatusInternalServerError)
-			return
-		}
-		mtype := mimetype.Detect(content)
-		log.Debugf("%s %s: %d %d bytes", request.Method, nPath, http.StatusOK, len(content))
-		response.Header().Set("Content-Type", mtype.String())
-		response.WriteHeader(http.StatusOK)
-		response.Write(content)
-	}
+func (hdler *TheHandler) Register(response http.ResponseWriter, request *http.Request) {
+
+}
+
+func (hdler *TheHandler) UnRegister(response http.ResponseWriter, request *http.Request) {
+
 }
