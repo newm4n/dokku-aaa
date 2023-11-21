@@ -107,27 +107,3 @@ func Start() {
 	log.Infof("Shutting down. This Hansip been protecting the world for %s", durDesc)
 	os.Exit(0)
 }
-
-func InitRouter(r *mux.Router) {
-	aaa := &TheHandler{}
-	r.HandleFunc("/login", aaa.Login).Methods(http.MethodPost)
-}
-
-type TheHandler struct {
-}
-
-func (hdler *TheHandler) Login(response http.ResponseWriter, request *http.Request) {
-
-}
-
-func (hdler *TheHandler) Refresh(response http.ResponseWriter, request *http.Request) {
-
-}
-
-func (hdler *TheHandler) Register(response http.ResponseWriter, request *http.Request) {
-
-}
-
-func (hdler *TheHandler) UnRegister(response http.ResponseWriter, request *http.Request) {
-
-}

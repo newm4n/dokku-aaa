@@ -29,6 +29,14 @@ func initialize() {
 
 	defCfg["server.timeout.graceshut"] = "15 seconds"
 
+	defCfg["token.age.access"] = "5 minutes"
+	defCfg["token.age.refresh"] = "2 years"
+
+	defCfg["token.key.public.pem.path"] = "/path/to/public/pem/file"
+	defCfg["token.key.private.pem.path"] = "/path/to/private/pem/file"
+	
+	defCfg["token.issuer"] = "SomeOrganizationAAA"
+
 	for k := range defCfg {
 		err := viper.BindEnv(k)
 		if err != nil {
