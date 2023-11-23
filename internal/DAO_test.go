@@ -195,3 +195,98 @@ func TestMemoryDAO_UpdateUserTenant(t *testing.T) {
 		}
 	})
 }
+
+func TestMemoryDAO_DeleteUserTenant(t *testing.T) {
+	mdao := &MemoryDAO{
+		UserAccountList:    make([]*UserAccount, 0),
+		UserTenantRoleList: make([]*UserTenantRoles, 0),
+	}
+	mdao.UserTenantRoleList = append(mdao.UserTenantRoleList, &UserTenantRoles{
+		email:  "user@mail.com",
+		tenant: "A",
+		roles:  []string{"R1", "R2"},
+	})
+	mdao.UserTenantRoleList = append(mdao.UserTenantRoleList, &UserTenantRoles{
+		email:  "otheruser@mail.com",
+		tenant: "A",
+		roles:  []string{"R1", "R2"},
+	})
+
+	assert.Equal(t, 2, len(mdao.UserTenantRoleList))
+	success, err := mdao.DeleteUserTenant(context.Background(), "user@mail.com", "A")
+	assert.NoError(t, err)
+	assert.True(t, success)
+	assert.Equal(t, 1, len(mdao.UserTenantRoleList))
+}
+
+func TestMemoryDAO_DeleteUserAllTenant(t *testing.T) {
+	mdao := &MemoryDAO{
+		UserAccountList:    make([]*UserAccount, 0),
+		UserTenantRoleList: make([]*UserTenantRoles, 0),
+	}
+	mdao.UserAccountList = append(mdao.UserAccountList, &UserAccount{
+		email:      "user@mail.com",
+		passphrase: "somehashhere",
+	})
+	mdao.UserTenantRoleList = append(mdao.UserTenantRoleList, &UserTenantRoles{
+		email:  "user@mail.com",
+		tenant: "A",
+		roles:  []string{"R1", "R2"},
+	})
+	mdao.UserTenantRoleList = append(mdao.UserTenantRoleList, &UserTenantRoles{
+		email:  "user@mail.com",
+		tenant: "B",
+		roles:  []string{"R3", "R4"},
+	})
+	mdao.UserTenantRoleList = append(mdao.UserTenantRoleList, &UserTenantRoles{
+		email:  "user@mail.com",
+		tenant: "C",
+		roles:  []string{"R1", "R2"},
+	})
+	mdao.UserTenantRoleList = append(mdao.UserTenantRoleList, &UserTenantRoles{
+		email:  "user@mail.com",
+		tenant: "D",
+		roles:  []string{"R1", "R2"},
+	})
+	mdao.UserTenantRoleList = append(mdao.UserTenantRoleList, &UserTenantRoles{
+		email:  "otheruser@mail.com",
+		tenant: "A",
+		roles:  []string{"R1", "R2"},
+	})
+
+	assert.Equal(t, 5, len(mdao.UserTenantRoleList))
+
+	success, err := mdao.DeleteUserAllTenant(context.Background(), "user@mail.com")
+	assert.NoError(t, err)
+	assert.True(t, success)
+
+	assert.Equal(t, 1, len(mdao.UserTenantRoleList))
+}
+
+func TestMemoryDAO_UserTenantExist(t *testing.T) {
+	// TODO test this
+}
+func TestMemoryDAO_SearchUserTenant(t *testing.T) {
+	// TODO test this
+}
+func TestMemoryDAO_CreateUserTenantRole(t *testing.T) {
+	// TODO test this
+}
+func TestMemoryDAO_DeleteUserTenantRole(t *testing.T) {
+	// TODO test this
+}
+func TestMemoryDAO_DeleteUserTenantAllRoles(t *testing.T) {
+	// TODO test this
+}
+func TestMemoryDAO_UserTenantRoleExist(t *testing.T) {
+	// TODO test this
+}
+func TestMemoryDAO_SearchUserRoleTenant(t *testing.T) {
+	// TODO test this
+}
+func TestMemoryDAO_Authenticate(t *testing.T) {
+	// TODO test this
+}
+func TestMemoryDAO_Refresh(t *testing.T) {
+	// TODO test this
+}

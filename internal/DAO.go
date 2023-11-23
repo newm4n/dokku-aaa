@@ -6,6 +6,8 @@ import (
 	"github.com/SermoDigital/jose/crypto"
 	"github.com/hyperjumptech/jiffy"
 	"github.com/newm4n/dokku-aaa/configuration"
+	"github.com/newm4n/dokku-aaa/internal/common"
+	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
 )
@@ -74,10 +76,11 @@ func (mdao *MemoryDAO) CreateUserAccount(ctx context.Context, email, passphrase 
 		return false, err
 	}
 	if exist {
+		log.Errorf("can not create user. user with %s email aready exist in UserAccountList", email)
 		return false, ErrFound
 	}
 
-	passHash, err := CreateHash(passphrase, DefaultParams)
+	passHash, err := common.CreateHash(passphrase, common.DefaultParams)
 	if err != nil {
 		return false, ErrInvalidPassword
 	}
@@ -101,12 +104,12 @@ func (mdao *MemoryDAO) UpdateUserPassphrase(ctx context.Context, email, oldPassp
 	}
 	for _, acc := range mdao.UserAccountList {
 		if strings.EqualFold(email, acc.email) {
-			compare, err := ComparePasswordAndHash(oldPassphrase, acc.passphrase)
+			compare, err := common.ComparePasswordAndHash(oldPassphrase, acc.passphrase)
 			if err != nil {
 				return false, err
 			}
 			if compare {
-				acc.passphrase, err = CreateHash(newPassphrase, DefaultParams)
+				acc.passphrase, err = common.CreateHash(newPassphrase, common.DefaultParams)
 				if err != nil {
 					return false, err
 				}
@@ -274,14 +277,15 @@ func (mdao *MemoryDAO) DeleteUserTenant(ctx context.Context, email, tenant strin
 	if ctx.Err() != nil {
 		return false, ctx.Err()
 	}
-	idxToDel := -1
+	if len(email) == 0 || len(tenant) == 0 {
+		return false, ErrArgumentEmpty
+	}
 	for idx, data := range mdao.UserTenantRoleList {
 		if strings.EqualFold(email, data.email) && tenant == data.tenant {
-			idxToDel = idx
+			mdao.UserTenantRoleList = append(mdao.UserTenantRoleList[:idx], mdao.UserTenantRoleList[idx+1:]...)
 			break
 		}
 	}
-	mdao.UserTenantRoleList = append(mdao.UserTenantRoleList[:idxToDel], mdao.UserTenantRoleList[idxToDel+1:]...)
 	return true, nil
 }
 
@@ -292,8 +296,11 @@ func (mdao *MemoryDAO) DeleteUserAllTenant(ctx context.Context, email string) (s
 	if ctx.Err() != nil {
 		return false, ctx.Err()
 	}
+	if len(email) == 0 {
+		return false, ErrArgumentEmpty
+	}
 
-	tenantsToDel := make([]string, 9)
+	tenantsToDel := make([]string, 0)
 	for _, data := range mdao.UserTenantRoleList {
 		if strings.EqualFold(email, data.email) {
 			tenantsToDel = append(tenantsToDel, data.tenant)
@@ -302,8 +309,11 @@ func (mdao *MemoryDAO) DeleteUserAllTenant(ctx context.Context, email string) (s
 
 	for _, del := range tenantsToDel {
 		success, err := mdao.DeleteUserTenant(ctx, email, del)
-		if err != nil || !success {
-			return success, err
+		if err != nil {
+			return false, err
+		}
+		if !success {
+			return false, fmt.Errorf("not success")
 		}
 	}
 
@@ -495,7 +505,7 @@ func (mdao *MemoryDAO) Authenticate(ctx context.Context, email, passphrase strin
 	//	for usr, mp := range mdao.UserTenantMap {
 	for _, usr := range mdao.UserAccountList {
 		if strings.EqualFold(email, usr.email) {
-			match, err := ComparePasswordAndHash(passphrase, usr.passphrase)
+			match, err := common.ComparePasswordAndHash(passphrase, usr.passphrase)
 			if err != nil || match == false {
 				return "", "", ErrInvalidPassword
 			}
@@ -524,20 +534,20 @@ func (mdao *MemoryDAO) Authenticate(ctx context.Context, email, passphrase strin
 			expRefresh := now.Add(durRefresh)
 
 			// TODO set proper audience for claims
-			accessClaim := &GoClaim{
+			accessClaim := &common.GoClaim{
 				Issuer:     configuration.Get("token.issuer"),
 				Subscriber: email,
-				TokenType:  AccessToken,
+				TokenType:  common.AccessToken,
 				Audience:   auds,
 				NotBefore:  now,
 				IssuedAt:   now,
 				ExpireAt:   expAccess,
 				Tokenid:    "",
 			}
-			refeshClaim := &GoClaim{
+			refeshClaim := &common.GoClaim{
 				Issuer:     configuration.Get("token.issuer"),
 				Subscriber: email,
-				TokenType:  RefreshToken,
+				TokenType:  common.RefreshToken,
 				Audience:   auds,
 				NotBefore:  now,
 				IssuedAt:   now,
@@ -545,7 +555,7 @@ func (mdao *MemoryDAO) Authenticate(ctx context.Context, email, passphrase strin
 				Tokenid:    "",
 			}
 
-			key, err := LoadPrivateKey()
+			key, err := common.LoadPrivateKey()
 			if err != nil {
 				return "", "", err
 			}
@@ -576,18 +586,18 @@ func (mdao *MemoryDAO) Refresh(ctx context.Context, refreshToken string) (access
 		return "", ErrArgumentEmpty
 	}
 
-	pubKey, err := LoadPublicKey()
+	pubKey, err := common.LoadPublicKey()
 	if err != nil {
 		return "", err
 	}
-	oClaim, err := NewGoClaimFromToken(refreshToken, pubKey, crypto.SigningMethodRS512)
+	oClaim, err := common.NewGoClaimFromToken(refreshToken, pubKey, crypto.SigningMethodRS512)
 	if err != nil {
 		return "", err
 	}
 	if oClaim.Issuer != configuration.Get("token.issuer") {
 		return "", ErrWrongIssuer
 	}
-	if oClaim.TokenType != RefreshToken {
+	if oClaim.TokenType != common.RefreshToken {
 		return "", ErrWrongToken
 	}
 
@@ -600,17 +610,17 @@ func (mdao *MemoryDAO) Refresh(ctx context.Context, refreshToken string) (access
 
 	expAccess := now.Add(durAccess)
 
-	nClaim := &GoClaim{
+	nClaim := &common.GoClaim{
 		Issuer:     oClaim.Issuer,
 		Subscriber: oClaim.Subscriber,
-		TokenType:  AccessToken,
+		TokenType:  common.AccessToken,
 		Audience:   oClaim.Audience,
 		NotBefore:  now,
 		IssuedAt:   now,
 		ExpireAt:   expAccess,
 		Tokenid:    "",
 	}
-	privKey, err := LoadPrivateKey()
+	privKey, err := common.LoadPrivateKey()
 	if err != nil {
 		return "", err
 	}

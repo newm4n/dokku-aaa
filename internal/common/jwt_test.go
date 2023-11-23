@@ -1,4 +1,4 @@
-package internal
+package common
 
 import (
 	"embed"
@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	//go:embed testkey
+	//go:embed ../testkey
 	keyFs embed.FS
 )
 
