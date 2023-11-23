@@ -2,6 +2,7 @@ package internal
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -36,17 +37,24 @@ func InitRouter(r *mux.Router) {
 	r.HandleFunc("/role/{user}/{tenant}/s", aaa.UserTenantSearchRole).Methods(http.MethodGet)
 }
 
-func WriteResponse(resp http.ResponseWriter, status int, headers map[string][]string, body []byte) {
-	if body != nil {
-		resp.Write(body)
+func WriteResponse(response http.ResponseWriter, status int, headers map[string][]string, body []byte) {
+	if status != http.StatusOK {
+		if body == nil {
+			logrus.Warnf("[%d]", status)
+		} else {
+			logrus.Warnf("[%d] %s", status, string(body))
+		}
 	}
-	resp.WriteHeader(status)
 	if headers != nil {
-		for hkey, hvarr := range headers {
-			for _, hvval := range hvarr {
-				resp.Header().Add(hkey, hvval)
+		for headerKey, headerValueArray := range headers {
+			for _, headerValue := range headerValueArray {
+				response.Header().Add(headerKey, headerValue)
 			}
 		}
+	}
+	response.WriteHeader(status)
+	if body != nil {
+		response.Write(body)
 	}
 }
 
