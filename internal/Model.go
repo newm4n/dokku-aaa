@@ -10,13 +10,12 @@ type TenantRoles struct {
 	Roles  []string
 }
 
-type LoginRequest struct {
+type AuthenticateRequest struct {
 	Email      string
 	Passphrase string
-	Tenant     string
 }
 
-type LoginResponse struct {
+type AuthenticateResponse struct {
 	Access  string
 	Refresh string
 }
