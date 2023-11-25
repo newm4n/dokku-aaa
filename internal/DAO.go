@@ -2,11 +2,11 @@ package internal
 
 import (
 	"context"
+	"dokku-aaa/internal/tools"
 	"fmt"
 	"github.com/SermoDigital/jose/crypto"
 	"github.com/hyperjumptech/jiffy"
 	"github.com/newm4n/dokku-aaa/configuration"
-	"github.com/newm4n/dokku-aaa/internal/common"
 	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
@@ -80,7 +80,7 @@ func (mdao *MemoryDAO) CreateUserAccount(ctx context.Context, email, passphrase 
 		return false, ErrFound
 	}
 
-	passHash, err := common.CreateHash(passphrase, common.DefaultParams)
+	passHash, err := tools.CreateHash(passphrase, tools.DefaultParams)
 	if err != nil {
 		return false, ErrInvalidPassword
 	}
@@ -104,12 +104,12 @@ func (mdao *MemoryDAO) UpdateUserPassphrase(ctx context.Context, email, oldPassp
 	}
 	for _, acc := range mdao.UserAccountList {
 		if strings.EqualFold(email, acc.email) {
-			compare, err := common.ComparePasswordAndHash(oldPassphrase, acc.passphrase)
+			compare, err := tools.ComparePasswordAndHash(oldPassphrase, acc.passphrase)
 			if err != nil {
 				return false, err
 			}
 			if compare {
-				acc.passphrase, err = common.CreateHash(newPassphrase, common.DefaultParams)
+				acc.passphrase, err = tools.CreateHash(newPassphrase, tools.DefaultParams)
 				if err != nil {
 					return false, err
 				}
@@ -505,7 +505,7 @@ func (mdao *MemoryDAO) Authenticate(ctx context.Context, email, passphrase strin
 	//	for usr, mp := range mdao.UserTenantMap {
 	for _, usr := range mdao.UserAccountList {
 		if strings.EqualFold(email, usr.email) {
-			match, err := common.ComparePasswordAndHash(passphrase, usr.passphrase)
+			match, err := tools.ComparePasswordAndHash(passphrase, usr.passphrase)
 			if err != nil || match == false {
 				return "", "", ErrInvalidPassword
 			}
@@ -534,20 +534,20 @@ func (mdao *MemoryDAO) Authenticate(ctx context.Context, email, passphrase strin
 			expRefresh := now.Add(durRefresh)
 
 			// TODO set proper audience for claims
-			accessClaim := &common.GoClaim{
+			accessClaim := &tools.GoClaim{
 				Issuer:     configuration.Get("token.issuer"),
 				Subscriber: email,
-				TokenType:  common.AccessToken,
+				TokenType:  tools.AccessToken,
 				Audience:   auds,
 				NotBefore:  now,
 				IssuedAt:   now,
 				ExpireAt:   expAccess,
 				Tokenid:    "",
 			}
-			refeshClaim := &common.GoClaim{
+			refeshClaim := &tools.GoClaim{
 				Issuer:     configuration.Get("token.issuer"),
 				Subscriber: email,
-				TokenType:  common.RefreshToken,
+				TokenType:  tools.RefreshToken,
 				Audience:   auds,
 				NotBefore:  now,
 				IssuedAt:   now,
@@ -555,7 +555,7 @@ func (mdao *MemoryDAO) Authenticate(ctx context.Context, email, passphrase strin
 				Tokenid:    "",
 			}
 
-			key, err := common.LoadPrivateKey()
+			key, err := tools.LoadPrivateKey()
 			if err != nil {
 				return "", "", err
 			}
@@ -586,18 +586,18 @@ func (mdao *MemoryDAO) Refresh(ctx context.Context, refreshToken string) (access
 		return "", ErrArgumentEmpty
 	}
 
-	pubKey, err := common.LoadPublicKey()
+	pubKey, err := tools.LoadPublicKey()
 	if err != nil {
 		return "", err
 	}
-	oClaim, err := common.NewGoClaimFromToken(refreshToken, pubKey, crypto.SigningMethodRS512)
+	oClaim, err := tools.NewGoClaimFromToken(refreshToken, pubKey, crypto.SigningMethodRS512)
 	if err != nil {
 		return "", err
 	}
 	if oClaim.Issuer != configuration.Get("token.issuer") {
 		return "", ErrWrongIssuer
 	}
-	if oClaim.TokenType != common.RefreshToken {
+	if oClaim.TokenType != tools.RefreshToken {
 		return "", ErrWrongToken
 	}
 
@@ -610,17 +610,17 @@ func (mdao *MemoryDAO) Refresh(ctx context.Context, refreshToken string) (access
 
 	expAccess := now.Add(durAccess)
 
-	nClaim := &common.GoClaim{
+	nClaim := &tools.GoClaim{
 		Issuer:     oClaim.Issuer,
 		Subscriber: oClaim.Subscriber,
-		TokenType:  common.AccessToken,
+		TokenType:  tools.AccessToken,
 		Audience:   oClaim.Audience,
 		NotBefore:  now,
 		IssuedAt:   now,
 		ExpireAt:   expAccess,
 		Tokenid:    "",
 	}
-	privKey, err := common.LoadPrivateKey()
+	privKey, err := tools.LoadPrivateKey()
 	if err != nil {
 		return "", err
 	}
