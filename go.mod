@@ -1,4 +1,4 @@
-module dokku-aaa
+module github.com/newm4n/dokku-aaa
 
 go 1.21.4
 
@@ -6,11 +6,10 @@ require (
 	github.com/SermoDigital/jose v0.0.0-20180104203859-803625baeddc
 	github.com/gorilla/mux v1.8.1
 	github.com/hyperjumptech/jiffy v1.0.0
-	github.com/newm4n/dokku-aaa v0.0.0-20231124013427-c8d5d637993a
+	github.com/newm4n/dokku-common v1.0.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/crypto v0.15.0
 )
 
 require (
@@ -31,6 +30,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
+	golang.org/x/crypto v0.15.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/sys v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect

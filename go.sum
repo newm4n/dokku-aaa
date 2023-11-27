@@ -148,8 +148,8 @@ github.com/magiconair/properties v1.8.7 h1:IeQXZAiQcpL9mgcAe1Nu6cX9LLw6ExEHKjN0V
 github.com/magiconair/properties v1.8.7/go.mod h1:Dhd985XPs7jluiymwWYZ0G4Z61jb3vdS329zhj2hYo0=
 github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyuac5Z2hdY=
 github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
-github.com/newm4n/dokku-aaa v0.0.0-20231124013427-c8d5d637993a h1:iVR6XohdynWvkrizzb9YSKZa6QJE+EKOx+b5wjoR2UM=
-github.com/newm4n/dokku-aaa v0.0.0-20231124013427-c8d5d637993a/go.mod h1:7t5Zrxz9no9OeVcVtOQ2N2gSe80hZxjqJnZk1XdLNZ4=
+github.com/newm4n/dokku-common v1.0.2 h1:3LmJIkB3osQwUurJGPV0Ru9q269nCMBqFH2z3EBG548=
+github.com/newm4n/dokku-common v1.0.2/go.mod h1:2Isr+I//nZNbkkJBCSXQWB9CXd5WlbX0E2XjfQSvqI4=
 github.com/pelletier/go-toml/v2 v2.1.0 h1:FnwAJ4oYMvbT/34k9zzHuZNrhlz48GB3/s6at6/MHO4=
 github.com/pelletier/go-toml/v2 v2.1.0/go.mod h1:tJU2Z3ZkXwnxa4DPO899bsyIoywizdUvyaeZurnPPDc=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
